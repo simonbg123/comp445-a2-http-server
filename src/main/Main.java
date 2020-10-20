@@ -1,9 +1,7 @@
 package main;
 
 import org.apache.commons.cli.*;
-
 import java.io.File;
-
 
 /**
  * Driver class. Parses command-line arguments and creates and runs the File Server.
