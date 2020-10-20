@@ -14,4 +14,8 @@ public class HttpServer {
     public void run() {
         System.out.println("I'm a server!");
     }
+
+    // parse request into an object
+    // parse the request-line, parse its elements
+    //todo not forget: crlf for end-of-line
 }
