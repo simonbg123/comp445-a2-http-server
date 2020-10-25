@@ -1,7 +1,9 @@
 package test;
 
 import http.HttpServer;
+import main.HttpFileServer;
 
+import java.io.File;
 import java.io.IOException;
 import java.sql.SQLOutput;
 import java.time.ZonedDateTime;
@@ -23,14 +25,29 @@ public class MainTest {
         /*DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss O");
         System.out.println(formatter.format(ZonedDateTime.now()));*/
 
-        String line = "  Content-LEngth: 675";
+        /*String line = "  Content-LEngth: 675";
         int contentLength = 0;
         if (line.toLowerCase().matches("^content-length: [0-9]+$")) {
             contentLength = Integer.parseInt(line.split("\\s")[1]);
         }
-        System.out.println(contentLength);
+        System.out.println(contentLength);*/
 
-        HttpServer server = new HttpServer(80, new MockHttpRequestHandler(), true);
+        /*String path = "c:\\filedoesntexist.txt";
+        File file = new File(path);
+
+        if (!file.exists()) System.out.println("HEY");
+        if (!file.isFile()) System.out.println("HO");
+        if (!file.canRead()) System.out.println("TALBOT!");*/
+
+        /*HttpServer server = new HttpServer(80, new MockHttpRequestHandler(), true);
+
+        try {
+            server.run();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
+
+        HttpServer server = new HttpServer(80, new HttpFileServer("C:\\Users\\Simon\\file_server"), true);
 
         try {
             server.run();

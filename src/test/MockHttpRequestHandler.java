@@ -18,7 +18,7 @@ public class MockHttpRequestHandler implements HttpRequestHandler {
 
         return new HttpResponse.Builder(HttpServer.VERSION_1_0)
                 .date(formatter.format(ZonedDateTime.now()))
-                .statusCodeAndReasonPhrase(HttpResponse.ok200)
+                .statusCodeAndReasonPhrase(HttpResponse.OK_200)
                 .contentLength(responseBody.getBytes().length)
                 .entityBody(responseBody)
                 .build();

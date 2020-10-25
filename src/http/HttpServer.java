@@ -20,8 +20,6 @@ public class HttpServer {
     ServerSocket serverSocket;
     private HttpRequestHandler requestHandler;
 
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss O");
-
     public HttpServer(int portNumber, HttpRequestHandler requestHandler) {
         this.portNumber = portNumber;
         this.requestHandler = requestHandler;
@@ -55,10 +53,10 @@ public class HttpServer {
                     out.flush();
                 }
                 catch (HeaderIOException e) {
-                    httpResponse = getErrorResponse(HttpResponse.internalServerError500, e.getMessage());
+                    httpResponse = getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, e.getMessage());
                 }
                 catch (HttpRequestFormatException e) {
-                    httpResponse = getErrorResponse(HttpResponse.badRequest400, e.getMessage());
+                    httpResponse = getErrorResponse(HttpResponse.BAD_REQUEST_400, e.getMessage());
                 }
             }
             catch (IOException ioe) {
@@ -70,8 +68,9 @@ public class HttpServer {
         }
     }
 
-    private HttpResponse getErrorResponse(String statusAndReason, String message) {
+    public static HttpResponse getErrorResponse(String statusAndReason, String message) {
 
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss O");
         int contentLength = message.getBytes().length;
 
         return new HttpResponse.Builder(VERSION_1_0)
@@ -80,6 +79,10 @@ public class HttpServer {
                 .contentLength(contentLength)
                 .entityBody(message)
                 .build();
+    }
+
+    public static HttpResponse getErrorResponse(String statusAndReason) {
+        return getErrorResponse(statusAndReason, "");
     }
 
     private HttpRequest extractRequest(BufferedReader in) throws HeaderIOException, HttpRequestFormatException {
@@ -134,7 +137,7 @@ public class HttpServer {
         /**
          * Get the entity body if any
          */
-        if (contentLength > 0) {
+        if (contentLength != null && contentLength > 0) {
             try {
                 entityBody = getBody(in, contentLength);
             }
