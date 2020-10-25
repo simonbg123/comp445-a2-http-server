@@ -5,6 +5,8 @@ import main.HttpFileServer;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.sql.SQLOutput;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -46,6 +48,36 @@ public class MainTest {
         } catch (IOException e) {
             e.printStackTrace();
         }*/
+        /*String s = File.pathSeparator;
+
+        String fullPath = "C:/Users/Simon\\doesntexist\\test.txt";
+        String fullPath2 = "/hey.txt";
+
+        File file = new File(fullPath);
+
+        String path = file.getParent();
+        String f = file.getName();
+
+        System.out.println("'" + path + "'" + "\n" + f);*/
+
+        //System.out.println(File.pathSeparator + " " + File.separator + " " + File.pathSeparatorChar + " " + File.separatorChar);
+
+
+       /* try {
+
+            String path = uri.getPath();
+            System.out.println(path);
+
+            *//*boolean res = new File(path).mkdirs();
+
+            if (!res) System.out.println("didnt work");
+
+            new File("C:\\Users\\Simon\\doesntexist\\test.txt").createNewFile();*//*
+
+        } catch (IOException e) {
+            System.out.println(e.getMessage());
+        }*/
+
 
         HttpServer server = new HttpServer(80, new HttpFileServer("C:\\Users\\Simon\\file_server"), true);
 

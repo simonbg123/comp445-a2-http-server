@@ -112,7 +112,7 @@ public class Main {
 
         //todo start the server:
         // handle io exceptions received here
-        HttpServer fileServer = new HttpServer(port, new HttpFileServer(rootDir));
+        HttpServer fileServer = new HttpServer(port, new HttpFileServer(dir.getPath()));
         try {
             fileServer.run();
         }

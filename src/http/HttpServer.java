@@ -12,12 +12,15 @@ import java.util.ArrayList;
 
 public class HttpServer {
 
+    /**
+     * public constants
+     */
     public static final String VERSION_1_0 = "HTTP/1.0";
+
 
     private static final String CLIENT_SOCKET_PROBLEM = "Problem creating socket for client connection";
     private boolean debug; // to comply with the assignment command line option
     private int portNumber;
-    ServerSocket serverSocket;
     private HttpRequestHandler requestHandler;
 
     public HttpServer(int portNumber, HttpRequestHandler requestHandler) {
@@ -34,7 +37,7 @@ public class HttpServer {
 
     public void run() throws IOException {
 
-        serverSocket = new ServerSocket(portNumber);
+        ServerSocket serverSocket = new ServerSocket(portNumber);
 
         while(true) {
 
@@ -49,8 +52,6 @@ public class HttpServer {
                 try {
                     httpRequest = extractRequest(in);
                     httpResponse = requestHandler.handleRequest(httpRequest);
-                    out.print(httpResponse.toString());
-                    out.flush();
                 }
                 catch (HeaderIOException e) {
                     httpResponse = getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, e.getMessage());
@@ -58,6 +59,9 @@ public class HttpServer {
                 catch (HttpRequestFormatException e) {
                     httpResponse = getErrorResponse(HttpResponse.BAD_REQUEST_400, e.getMessage());
                 }
+
+                out.print(httpResponse.toString());
+                out.flush();
             }
             catch (IOException ioe) {
                 //Here we can't send a 400 or 500 since the connection
@@ -67,6 +71,10 @@ public class HttpServer {
             }
         }
     }
+
+    /** * * * * * * * * * * * * * * *
+     * Static public helper methods
+     * * * * * * * * * * * * * * * * */
 
     public static HttpResponse getErrorResponse(String statusAndReason, String message) {
 
@@ -85,6 +93,13 @@ public class HttpServer {
         return getErrorResponse(statusAndReason, "");
     }
 
+    /** * * * * * * * * * *
+     * instance methods
+     * * * * * * * * * * */
+
+    /**
+     * Parses a raw HTTP request character stream  and returns the corresponding HttpRequest object.
+     */
     private HttpRequest extractRequest(BufferedReader in) throws HeaderIOException, HttpRequestFormatException {
 
         // Get the header lines
@@ -97,12 +112,12 @@ public class HttpServer {
         }
 
         // Parse the header lines and throw exception if ill-formed
-        if (headerLines.isEmpty()) throw new HeaderIOException("Request Header is ill-formed");
+        if (headerLines.isEmpty()) throw new HeaderIOException("Request Header is ill-formed\n");
 
         String[] requestLineArgs = headerLines.get(0).split("\\s+");
 
         if (requestLineArgs.length != 3) {
-            throw new HttpRequestFormatException("Request line is ill-formed (three tokens are needed): " + headerLines.get(0));
+            throw new HttpRequestFormatException("Request line is ill-formed (three tokens are needed): " + headerLines.get(0) + "\n");
         }
 
         String method = requestLineArgs[0];
@@ -110,13 +125,13 @@ public class HttpServer {
         String httpVersion = requestLineArgs[2];
 
         if (!method.equalsIgnoreCase(HttpRequest.GET) && !method.equalsIgnoreCase(HttpRequest.POST)) {
-            throw new HttpRequestFormatException("Wrong method: " + method);
+            throw new HttpRequestFormatException("Wrong method: " + method + "\n");
         }
         if (!requestURI.matches("^/.*")) {
-            throw new HttpRequestFormatException("Wrong format for URI path: " + requestURI);
+            throw new HttpRequestFormatException("Wrong format for URI path: " + requestURI + "\n");
         }
         if (!httpVersion.equalsIgnoreCase(VERSION_1_0)) {
-            throw new HttpRequestFormatException("Unsupported version: " + httpVersion);
+            throw new HttpRequestFormatException("Unsupported version: " + httpVersion + "\n");
         }
 
         // parse the header lines
@@ -129,8 +144,8 @@ public class HttpServer {
             //Note: irrelevant header lines are ignored.
         }
 
-        if (contentLength == null && method.equalsIgnoreCase(HttpRequest.POST)) {
-            throw new HttpRequestFormatException("No content length for a POST request.");
+        if ((contentLength == null || contentLength < 0) && method.equalsIgnoreCase(HttpRequest.POST)) {
+            throw new HttpRequestFormatException("No content length for a POST request.\n");
         }
 
         String entityBody = null;
@@ -142,7 +157,7 @@ public class HttpServer {
                 entityBody = getBody(in, contentLength);
             }
             catch (IOException e) {
-                throw new HeaderIOException("Problem reading the entity body");
+                throw new HeaderIOException("Problem reading the entity body.\n");
             }
         }
 
@@ -150,15 +165,14 @@ public class HttpServer {
         return new HttpRequest.Builder(method)
                 .requestURI(requestURI)
                 .httpVersion(httpVersion)
+                .contentLength(contentLength)
                 .entityBody(entityBody)
                 .build();
 
     }
 
-    /*
-     * Reads the request from the server and populates lists of
-     * header lines and body lines.
-     * Enforces proper line terminations crlf for the header.
+    /**
+     * Reads and returns the header lines from a raw character stream, enforcing crlf line terminations
      */
     private ArrayList<String> getHeader(BufferedReader in) throws IOException {
 
@@ -240,7 +254,5 @@ public class HttpServer {
 
         System.out.println();
     }
-    // parse request into an object
-    // parse the request-line, parse its elements
-    //todo not forget: crlf for end-of-line
+
 }

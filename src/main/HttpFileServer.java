@@ -45,7 +45,7 @@ public class HttpFileServer implements HttpRequestHandler {
         File file = new File(path);
 
         if (!file.isFile()){
-            return HttpServer.getErrorResponse(HttpResponse.NOT_FOUND_404);
+            return HttpServer.getErrorResponse(HttpResponse.NOT_FOUND_404, "Resource is not a file");
         }
         else if (!file.canRead()) {
             String message = "Cannot read the specified file: " + path;
@@ -77,12 +77,55 @@ public class HttpFileServer implements HttpRequestHandler {
     }
 
     private HttpResponse handlePOST(HttpRequest httpRequest) {
-        //try to create the resource
-        //if there is text, write the text to the file
-        //handle exception with a 500 error
 
-        //return appropriate message "created succesfully, etc."
-        return null;
+        String fullPath = rootDir + httpRequest.getRequestURI();
+
+        File file = new File(fullPath);
+
+        String path = file.getParent();
+
+        File folder = new File(path);
+
+        if (!folder.isDirectory()) {
+            boolean success = folder.mkdirs();
+
+            if (!success) {
+                String message = "Couldn't make directories: " + path + "\n";
+                return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
+            }
+        }
+        else if (!folder.canWrite()) {
+            String message = "Can't read directory: " + path + "\n";
+            return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
+        }
+
+        try {
+
+            if (!file.exists()) {
+                boolean success = file.createNewFile();
+                if (!success) throw new IOException("Cannot create new file: " + path + "\n");
+            }
+
+        }
+        catch (IOException e) {
+            //todo remove any created directories
+            return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, e.getMessage());
+        }
+
+        //write content to file, or overwrite with new or no content
+        try (PrintWriter pw = new PrintWriter(file)) {
+            String content = httpRequest.getEntityBody();
+            pw.print(content!= null ? content : "");
+        }
+        catch (FileNotFoundException fnf) {
+            //todo clean up directories
+            String message = "Problem writing to file: " + file.getPath();
+            return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
+        }
+
+        String message = "File '" + file.getPath() + "' created successfully. Size: " + httpRequest.getContentLength() + "\n";
+        return getResponse(HttpResponse.OK_200, message);
+
     }
 
     private HttpResponse getResponse(String statusAndReason, String message) {
