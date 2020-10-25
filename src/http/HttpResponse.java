@@ -4,7 +4,6 @@ public class HttpResponse {
 
     public static final String ok200 = "200 OK";
     public static final String created201 = "201 Created";
-    public static final String version_1_0 = "HTTP/1.0";
     public static final String badRequest400 = "400 Bad Request";
     public static final String notFound404 = "404 Not Found";
 
@@ -18,7 +17,7 @@ public class HttpResponse {
     private String httpVersion;
     private String statusCodeAndReasonPhrase;
     private String date; // optional
-    private int contentLength; // optional. If no body, then must be defined as 0.
+    private int contentLength; // If no body, then must be defined as 0.
     private String contentType; // optional, text/plain
 
     /**
@@ -58,6 +57,17 @@ public class HttpResponse {
 
     public String getEntityBody() {
         return entityBody;
+    }
+
+    @Override
+    public String toString() {
+
+        return httpVersion + " " + statusCodeAndReasonPhrase + "\r\n" +
+                ((date != null) ? "Date: " + date + "\r\n" : "") +
+                "Content-Length: " + contentLength + "\r\n" +
+                ((contentType != null)? "Content-Type: " + contentType + "\r\n" : "") +
+                "\r\n" + // end of header
+                ((contentLength > 0 && entityBody != null)? entityBody : "" );
     }
 
     public static class Builder {

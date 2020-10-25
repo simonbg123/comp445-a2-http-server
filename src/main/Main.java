@@ -1,7 +1,9 @@
 package main;
 
+import http.HttpServer;
 import org.apache.commons.cli.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.Scanner;
 
 /**
@@ -105,6 +107,18 @@ public class Main {
 
         if (parsedOptions.hasOption('v')) {
             System.out.println("DEBUG: root directory = " +  rootDir);
+        }
+
+
+        //todo start the server:
+        // handle io exceptions received here
+        HttpServer fileServer = new HttpServer(port, new HttpFileServer(rootDir));
+        try {
+            fileServer.run();
+        }
+        catch (IOException e) {
+            System.out.println("Problem creating a server socket");
+            e.printStackTrace();
         }
 
 
