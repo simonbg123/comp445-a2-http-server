@@ -2,12 +2,13 @@ package main;
 
 import org.apache.commons.cli.*;
 import java.io.File;
+import java.util.Scanner;
 
 /**
  * Driver class. Parses command-line arguments and creates and runs the File Server.
  */
 public class Main {
-
+    //todo enforce non-well-known ports only?
     private static final int DEFAULT_PORT = 8080;
     private static final int MAX_PORT = 65535;
     private static final String PORT_ERROR = "Port out of range. Please select a port in range [0, 65535]";
@@ -59,6 +60,22 @@ public class Main {
         if (port < 0 || port > MAX_PORT) {
             System.out.println(PORT_ERROR + "\n");
             return;
+        }
+        else if (port < 1024) {
+            Scanner scan = new Scanner(System.in);
+            String answer = "";
+            do {
+                System.out.println("Well-known port number specified.\nDo you wish to proceed? (y | n)");
+                answer = scan.next();
+            }
+            while (! answer.matches("^\\s*[ynYN]\\s*$"));
+            scan.close();
+            scan = null;
+            if (answer.trim().toLowerCase().equals("n")) {
+                System.out.println("Exiting...");
+                return;
+            }
+
         }
 
 
