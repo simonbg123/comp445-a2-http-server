@@ -39,19 +39,23 @@ public class HttpServer {
 
         ServerSocket serverSocket = new ServerSocket(portNumber);
 
-        while(true) {
+        if (debug) System.out.println("\nServer is running...\n");
 
-            //todo have a catchall for the httpc client TCP exception
+        while(true) {
 
             try (Socket clientSocket = serverSocket.accept();
                  PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
                  BufferedReader in = new BufferedReader( new InputStreamReader(clientSocket.getInputStream()))) {
 
+                if (debug) System.out.println("Server contacted by " + clientSocket.getInetAddress() + "\n");
+
                 HttpRequest httpRequest = null;
                 HttpResponse httpResponse = null;
                 try {
                     httpRequest = extractRequest(in);
+                    if (debug) System.out.println("Request:\n" + httpRequest + "\n");
                     httpResponse = requestHandler.handleRequest(httpRequest);
+                    if (debug) System.out.println("Response:\n" + httpResponse + "\n");
                 }
                 catch (HeaderIOException e) {
                     httpResponse = getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, e.getMessage());
@@ -135,16 +139,18 @@ public class HttpServer {
         }
 
         // parse the header lines
-        Integer contentLength = null;
+        int contentLength = 0;
+        boolean contentLengthIsSet = false;
 
         for (String line : headerLines) {
             if (line.trim().toLowerCase().matches("^content-length: [0-9]+$")) {
                 contentLength = Integer.parseInt(line.split("\\s")[1]);
+                contentLengthIsSet = true;
             }
             //Note: irrelevant header lines are ignored.
         }
 
-        if ((contentLength == null || contentLength < 0) && method.equalsIgnoreCase(HttpRequest.POST)) {
+        if (!contentLengthIsSet && method.equalsIgnoreCase(HttpRequest.POST)) {
             throw new HttpRequestFormatException("No content length for a POST request.\n");
         }
 
@@ -152,7 +158,7 @@ public class HttpServer {
         /**
          * Get the entity body if any
          */
-        if (contentLength != null && contentLength > 0) {
+        if (contentLength > 0) {
             try {
                 entityBody = getBody(in, contentLength);
             }

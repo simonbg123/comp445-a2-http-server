@@ -44,11 +44,14 @@ public class HttpFileServer implements HttpRequestHandler {
         String path = rootDir + httpRequest.getRequestURI();
         File file = new File(path);
 
-        if (!file.isFile()){
-            return HttpServer.getErrorResponse(HttpResponse.NOT_FOUND_404, "Resource is not a file");
+        if (file.isDirectory()) {
+            return HttpServer.getErrorResponse(HttpResponse.NOT_FOUND_404, "Resource is a not a file.\n");
+        }
+        else if (!file.isFile()){
+            return HttpServer.getErrorResponse(HttpResponse.NOT_FOUND_404, "Resource does not exist.\n");
         }
         else if (!file.canRead()) {
-            String message = "Cannot read the specified file: " + path;
+            String message = "Cannot read the specified file: " + path + "\n";
             return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
         }
 
@@ -65,11 +68,11 @@ public class HttpFileServer implements HttpRequestHandler {
 
         }
         catch (FileNotFoundException fnf) {
-            String message = "Couldn't find resource: " + path;
+            String message = "Couldn't find resource: " + path + "\n";
             httpResponse = HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
         }
         catch (IOException e) {
-            String message = "Problem reading the specified file: " + path;
+            String message = "Problem reading the specified file: " + path + "\n";
             httpResponse = HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
         }
 
@@ -95,7 +98,7 @@ public class HttpFileServer implements HttpRequestHandler {
             }
         }
         else if (!folder.canWrite()) {
-            String message = "Can't read directory: " + path + "\n";
+            String message = "Can't write to directory: " + path + "\n";
             return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
         }
 

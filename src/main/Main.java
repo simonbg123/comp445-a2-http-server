@@ -56,15 +56,17 @@ public class Main {
         }
 
         if (parsedOptions.hasOption('v')) {
-            System.out.println("DEBUG: port number = " + port);
+            System.out.println("Port number = " + port);
         }
 
         if (port < 0 || port > MAX_PORT) {
             System.out.println(PORT_ERROR + "\n");
             return;
         }
-        else if (port < 1024) {
-            Scanner scan = new Scanner(System.in);
+        else if (port < 1024 && port != 80) {
+
+            System.out.println("\nWarning: the selected port is a well-known port.\n");
+            /*Scanner scan = new Scanner(System.in);
             String answer = "";
             do {
                 System.out.println("Well-known port number specified.\nDo you wish to proceed? (y | n)");
@@ -76,7 +78,7 @@ public class Main {
             if (answer.trim().toLowerCase().equals("n")) {
                 System.out.println("Exiting...");
                 return;
-            }
+            }*/
 
         }
 
@@ -106,22 +108,17 @@ public class Main {
         }
 
         if (parsedOptions.hasOption('v')) {
-            System.out.println("DEBUG: root directory = " +  rootDir);
+            System.out.println("Root Directory = " +  rootDir);
         }
 
-
-        //todo start the server:
-        // handle io exceptions received here
-        HttpServer fileServer = new HttpServer(port, new HttpFileServer(dir.getPath()));
+        boolean verbose = parsedOptions.hasOption('v');
+        HttpServer fileServer = new HttpServer(port, new HttpFileServer(dir.getPath()), verbose);
         try {
             fileServer.run();
         }
         catch (IOException e) {
-            System.out.println("Problem creating a server socket");
-            e.printStackTrace();
+            System.out.println("Problem creating a server socket.\n" + e.getMessage());
         }
-
-
     }
 
     static private Options getParserOptions() {
