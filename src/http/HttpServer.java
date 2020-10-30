@@ -23,7 +23,7 @@ public class HttpServer {
     private boolean verbose; // to comply with the assignment command line option
     private int portNumber;
     private HttpRequestHandler requestHandler;
-    private final Object verboseOutputLock  = new Object();;
+    private final Object verboseOutputLock  = new Object();
 
     public HttpServer(int portNumber, HttpRequestHandler requestHandler) {
         this.portNumber = portNumber;
@@ -45,32 +45,10 @@ public class HttpServer {
 
         while(true) {
 
-            try (Socket clientSocket = serverSocket.accept();
-                 PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
-                 BufferedReader in = new BufferedReader( new InputStreamReader(clientSocket.getInputStream()))) {
+            try (Socket clientSocket = serverSocket.accept()) {
 
-                if (verbose) System.out.println("Server contacted by " + clientSocket.getInetAddress() + "\n");
+                new HttpServerThread(clientSocket, requestHandler, verbose, verboseOutputLock).start();
 
-                HttpRequest httpRequest = null;
-                HttpResponse httpResponse = null;
-                try {
-                    httpRequest = extractRequest(in);
-                    if (verbose) System.out.println("Request:\n" + httpRequest + "\n");
-                    httpResponse = requestHandler.handleRequest(httpRequest);
-                    if (verbose) System.out.println("Response:\n" + httpResponse + "\n");
-                }
-                catch (HeaderIOException e) {
-                    httpResponse = getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, e.getMessage());
-                }
-                catch (HttpRequestFormatException e) {
-                    httpResponse = getErrorResponse(HttpResponse.BAD_REQUEST_400, e.getMessage());
-                }
-                catch (HttpRequestUnsupportedVersionException e) {
-                    httpResponse = getErrorResponse(HttpResponse.UNSPPORTED_VERSION_505, e.getMessage());
-                }
-
-                out.print(httpResponse.toString());
-                out.flush();
             }
             catch (IOException ioe) {
                 if (verbose) {

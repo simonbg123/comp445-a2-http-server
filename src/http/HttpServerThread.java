@@ -1,7 +1,6 @@
 package http;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
@@ -11,8 +10,8 @@ public class HttpServerThread extends Thread {
 
     private Socket clientSocket;
     private HttpRequestHandler requestHandler;
-    boolean verbose;
-    Object verboseOutputLock = null;
+    private boolean verbose;
+    private Object verboseOutputLock = null;
 
     public HttpServerThread(Socket clientSocket, HttpRequestHandler requestHandler, boolean verbose, Object verboseOutputLock) {
         this.clientSocket = clientSocket;
