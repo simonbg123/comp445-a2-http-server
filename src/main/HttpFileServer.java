@@ -52,7 +52,7 @@ public class HttpFileServer implements HttpRequestHandler {
         }
         else if (!file.canRead()) {
             String message = "Cannot read the specified file: " + path + "\n";
-            return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
+            return HttpServer.getErrorResponse(HttpResponse.FORBIDDEN_403, message);
         }
 
         //if ok, get the string and make a 200ok response with body
@@ -90,16 +90,15 @@ public class HttpFileServer implements HttpRequestHandler {
         File folder = new File(path);
 
         if (!folder.isDirectory()) {
-            boolean success = folder.mkdirs();
 
-            if (!success) {
-                String message = "Couldn't make directories: " + path + "\n";
+            if (!folder.mkdirs()) {
+                String message = "Couldn't make directory(ies): " + path + "\n";
                 return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
             }
         }
         else if (!folder.canWrite()) {
             String message = "Can't write to directory: " + path + "\n";
-            return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
+            return HttpServer.getErrorResponse(HttpResponse.FORBIDDEN_403, message);
         }
 
         try {
@@ -115,6 +114,10 @@ public class HttpFileServer implements HttpRequestHandler {
             return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, e.getMessage());
         }
 
+        if (!file.canWrite()) {
+            return HttpServer.getErrorResponse(HttpResponse.FORBIDDEN_403, "\nCan't write to file: " + file.getPath() + "\n");
+        }
+
         //write content to file, or overwrite with new or no content
         try (PrintWriter pw = new PrintWriter(file)) {
             String content = httpRequest.getEntityBody();
@@ -127,7 +130,7 @@ public class HttpFileServer implements HttpRequestHandler {
         }
 
         String message = "File '" + file.getPath() + "' created successfully. Size: " + httpRequest.getContentLength() + "\n";
-        return getResponse(HttpResponse.OK_200, message);
+        return getResponse(HttpResponse.CREATED_201, message);
 
     }
 

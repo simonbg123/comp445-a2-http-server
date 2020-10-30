@@ -6,8 +6,10 @@ public class HttpResponse {
     public static final String CREATED_201 = "201 Created";
     public static final String BAD_REQUEST_400 = "400 Bad Request";
     public static final String NOT_FOUND_404 = "404 Not Found";
+    public static final String FORBIDDEN_403 = "403 Forbidden";
 
     public static final String INTERNAL_SERVER_ERROR_500 = "500 Internal Server Error";
+    public static final String UNSPPORTED_VERSION_505 = "505 Version Not Supported";
 
     public static final String contentTypePlainText = "Content-Type: text/plain";
 

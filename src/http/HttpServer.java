@@ -63,6 +63,9 @@ public class HttpServer {
                 catch (HttpRequestFormatException e) {
                     httpResponse = getErrorResponse(HttpResponse.BAD_REQUEST_400, e.getMessage());
                 }
+                catch (HttpRequestUnsupportedVersionException e) {
+                    httpResponse = getErrorResponse(HttpResponse.UNSPPORTED_VERSION_505, e.getMessage());
+                }
 
                 out.print(httpResponse.toString());
                 out.flush();
@@ -104,7 +107,7 @@ public class HttpServer {
     /**
      * Parses a raw HTTP request character stream  and returns the corresponding HttpRequest object.
      */
-    private HttpRequest extractRequest(BufferedReader in) throws HeaderIOException, HttpRequestFormatException {
+    private HttpRequest extractRequest(BufferedReader in) throws HeaderIOException, HttpRequestFormatException, HttpRequestUnsupportedVersionException {
 
         // Get the header lines
         ArrayList<String> headerLines;
@@ -135,7 +138,7 @@ public class HttpServer {
             throw new HttpRequestFormatException("Wrong format for URI path: " + requestURI + "\n");
         }
         if (!httpVersion.equalsIgnoreCase(VERSION_1_0)) {
-            throw new HttpRequestFormatException("Unsupported version: " + httpVersion + "\n");
+            throw new HttpRequestUnsupportedVersionException("Unsupported version: " + httpVersion + "\n");
         }
 
         // parse the header lines
