@@ -38,6 +38,9 @@ public class HttpFileServer implements HttpRequestHandler {
         return httpResponse;
     }
 
+    /* Note: this doesn't modify the state of the request handler.
+     * Therefore there is no need for synchronization
+     */
     private HttpResponse handleGET(HttpRequest httpRequest) {
 
         HttpResponse httpResponse = null;
@@ -79,6 +82,9 @@ public class HttpFileServer implements HttpRequestHandler {
         return httpResponse;
     }
 
+    /* Note: this does not modify the state of the request handler
+     * but it does modify the state of the system.
+     */
     private HttpResponse handlePOST(HttpRequest httpRequest) {
 
         String fullPath = rootDir + httpRequest.getRequestURI();

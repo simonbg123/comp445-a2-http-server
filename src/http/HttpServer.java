@@ -18,28 +18,31 @@ public class HttpServer {
     public static final String VERSION_1_0 = "HTTP/1.0";
 
 
-    private static final String CLIENT_SOCKET_PROBLEM = "Problem creating socket for client connection";
-    private boolean debug; // to comply with the assignment command line option
+    static final String CLIENT_SOCKET_PROBLEM = "Problem creating socket for client connection";
+    private static final String WAITING_FOR_CONNECTION_PROBLEM = "Problem while waiting for client connection";
+    private boolean verbose; // to comply with the assignment command line option
     private int portNumber;
     private HttpRequestHandler requestHandler;
+    private Object verboseOutputLock;
 
     public HttpServer(int portNumber, HttpRequestHandler requestHandler) {
         this.portNumber = portNumber;
         this.requestHandler = requestHandler;
-        debug = false;
+        verbose = false;
     }
 
-    public HttpServer(int portNumber, HttpRequestHandler requestHandler, boolean debug) {
+    public HttpServer(int portNumber, HttpRequestHandler requestHandler, boolean verbose) {
         this.portNumber = portNumber;
         this.requestHandler = requestHandler;
-        this.debug = debug;
+        this.verbose = verbose;
+        verboseOutputLock = new Object();
     }
 
     public void run() throws IOException {
 
         ServerSocket serverSocket = new ServerSocket(portNumber);
 
-        if (debug) System.out.println("\nServer is running...\n");
+        if (verbose) System.out.println("\nServer is running...\n");
 
         while(true) {
 
@@ -47,15 +50,15 @@ public class HttpServer {
                  PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
                  BufferedReader in = new BufferedReader( new InputStreamReader(clientSocket.getInputStream()))) {
 
-                if (debug) System.out.println("Server contacted by " + clientSocket.getInetAddress() + "\n");
+                if (verbose) System.out.println("Server contacted by " + clientSocket.getInetAddress() + "\n");
 
                 HttpRequest httpRequest = null;
                 HttpResponse httpResponse = null;
                 try {
                     httpRequest = extractRequest(in);
-                    if (debug) System.out.println("Request:\n" + httpRequest + "\n");
+                    if (verbose) System.out.println("Request:\n" + httpRequest + "\n");
                     httpResponse = requestHandler.handleRequest(httpRequest);
-                    if (debug) System.out.println("Response:\n" + httpResponse + "\n");
+                    if (verbose) System.out.println("Response:\n" + httpResponse + "\n");
                 }
                 catch (HeaderIOException e) {
                     httpResponse = getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, e.getMessage());
@@ -71,10 +74,14 @@ public class HttpServer {
                 out.flush();
             }
             catch (IOException ioe) {
-                //Here we can't send a 400 or 500 since the connection
-                // couldn't be established. Therefore, the client application
-                // will have to handle the absence of a well-formed response
-                // We have to ignore the request.
+                if (verbose) {
+                    System.out.println("\n" + WAITING_FOR_CONNECTION_PROBLEM + " :\n" + ioe.getMessage() + "\n");
+                }
+            }
+            catch (Exception e) {
+                if(verbose) {
+                    System.out.println("\n" + CLIENT_SOCKET_PROBLEM + " :\n" + e.getMessage() + "\n");
+                }
             }
         }
     }
@@ -107,7 +114,7 @@ public class HttpServer {
     /**
      * Parses a raw HTTP request character stream  and returns the corresponding HttpRequest object.
      */
-    private HttpRequest extractRequest(BufferedReader in) throws HeaderIOException, HttpRequestFormatException, HttpRequestUnsupportedVersionException {
+    static HttpRequest extractRequest(BufferedReader in) throws HeaderIOException, HttpRequestFormatException, HttpRequestUnsupportedVersionException {
 
         // Get the header lines
         ArrayList<String> headerLines;
@@ -183,7 +190,7 @@ public class HttpServer {
     /**
      * Reads and returns the header lines from a raw character stream, enforcing crlf line terminations
      */
-    private ArrayList<String> getHeader(BufferedReader in) throws IOException {
+    private static ArrayList<String> getHeader(BufferedReader in) throws IOException {
 
         ArrayList<String> header = new ArrayList<>();
         boolean cr = false;
@@ -223,7 +230,7 @@ public class HttpServer {
         return header;
     }
 
-    private String getBody(BufferedReader in, int size) throws  IOException{
+    private static String getBody(BufferedReader in, int size) throws  IOException{
 
         int currentChar;
         int byteCount = 0;
@@ -243,7 +250,7 @@ public class HttpServer {
 
 
     /**
-     * used in debug mode
+     * used in verbose mode
      */
     void printRawRequestLines(ArrayList<String> header, ArrayList<String> body, PrintWriter pw) {
         for (String line : header) {
