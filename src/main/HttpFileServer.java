@@ -8,13 +8,20 @@ import http.HttpServer;
 import java.io.*;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static http.HttpServer.VERSION_1_0;
 
 public class HttpFileServer implements HttpRequestHandler {
 
+    private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss O");
+
+    private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
+    private final Lock r = rwl.readLock();
+    private final Lock w = rwl.writeLock();
+
     private String rootDir;
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss O");
 
     public HttpFileServer(String rootDir) {
         this.rootDir = rootDir;
@@ -38,106 +45,124 @@ public class HttpFileServer implements HttpRequestHandler {
         return httpResponse;
     }
 
-    /* Note: this doesn't modify the state of the request handler.
-     * Therefore there is no need for synchronization
+    /* Threadsafe method to read and return the contents of a file
+     * Acquires a read lock preventing another thread from modifying
+     * a file while it's being read
      */
     private HttpResponse handleGET(HttpRequest httpRequest) {
 
-        HttpResponse httpResponse = null;
-        String path = rootDir + httpRequest.getRequestURI();
-        File file = new File(path);
+        r.lock();
 
-        if (file.isDirectory()) {
-            return HttpServer.getErrorResponse(HttpResponse.NOT_FOUND_404, "Resource is a not a file.\n");
-        }
-        else if (!file.isFile()){
-            return HttpServer.getErrorResponse(HttpResponse.NOT_FOUND_404, "Resource does not exist.\n");
-        }
-        else if (!file.canRead()) {
-            String message = "Cannot read the specified file: " + path + "\n";
-            return HttpServer.getErrorResponse(HttpResponse.FORBIDDEN_403, message);
-        }
+        try {
+            HttpResponse httpResponse = null;
+            String path = rootDir + httpRequest.getRequestURI();
+            File file = new File(path);
 
-        //if ok, get the string and make a 200ok response with body
-        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
-
-            StringBuilder sb = new StringBuilder();
-            String line;
-            for (line = br.readLine(); line != null; line = br.readLine()) {
-                sb.append(line + '\n');
+            if (file.isDirectory()) {
+                return HttpServer.getErrorResponse(HttpResponse.NOT_FOUND_404, "Resource is a not a file.\n");
+            }
+            else if (!file.isFile()){
+                return HttpServer.getErrorResponse(HttpResponse.NOT_FOUND_404, "Resource does not exist.\n");
+            }
+            else if (!file.canRead()) {
+                String message = "Cannot read the specified file: " + path + "\n";
+                return HttpServer.getErrorResponse(HttpResponse.FORBIDDEN_403, message);
             }
 
-            httpResponse = getResponse(HttpResponse.OK_200, sb.toString());
+            //if ok, get the string and make a 200ok response with body
+            try (BufferedReader br = new BufferedReader(new FileReader(path))) {
 
+                StringBuilder sb = new StringBuilder();
+                String line;
+                for (line = br.readLine(); line != null; line = br.readLine()) {
+                    sb.append(line + '\n');
+                }
+
+                httpResponse = getResponse(HttpResponse.OK_200, sb.toString());
+
+            }
+            catch (FileNotFoundException fnf) {
+                String message = "Couldn't find resource: " + path + "\n";
+                httpResponse = HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
+            }
+            catch (IOException e) {
+                String message = "Problem reading the specified file: " + path + "\n";
+                httpResponse = HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
+            }
+
+            return httpResponse;
         }
-        catch (FileNotFoundException fnf) {
-            String message = "Couldn't find resource: " + path + "\n";
-            httpResponse = HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
-        }
-        catch (IOException e) {
-            String message = "Problem reading the specified file: " + path + "\n";
-            httpResponse = HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
+        finally {
+            r.unlock();
         }
 
-        return httpResponse;
     }
 
-    /* Note: this does not modify the state of the request handler
-     * but it does modify the state of the system.
+    /* Creates a file and any needed directories requested by the client
+     * and writes to the file any content specified in the request.
+     * Uses a writer's lock to make sure no other thread is accessing the file
+     * system while this method is executing.
      */
     private HttpResponse handlePOST(HttpRequest httpRequest) {
 
-        String fullPath = rootDir + httpRequest.getRequestURI();
-
-        File file = new File(fullPath);
-
-        String path = file.getParent();
-
-        File folder = new File(path);
-
-        if (!folder.isDirectory()) {
-
-            if (!folder.mkdirs()) {
-                String message = "Couldn't make directory(ies): " + path + "\n";
-                return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
-            }
-        }
-        else if (!folder.canWrite()) {
-            String message = "Can't write to directory: " + path + "\n";
-            return HttpServer.getErrorResponse(HttpResponse.FORBIDDEN_403, message);
-        }
+        w.lock();
 
         try {
+            String fullPath = rootDir + httpRequest.getRequestURI();
 
-            if (!file.exists()) {
-                boolean success = file.createNewFile();
-                if (!success) throw new IOException("Cannot create new file: " + path + "\n");
+            File file = new File(fullPath);
+
+            String path = file.getParent();
+
+            File folder = new File(path);
+
+            if (!folder.isDirectory()) {
+
+                if (!folder.mkdirs()) {
+                    String message = "Couldn't make directory(ies): " + path + "\n";
+                    return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
+                }
+            }
+            else if (!folder.canWrite()) {
+                String message = "Can't write to directory: " + path + "\n";
+                return HttpServer.getErrorResponse(HttpResponse.FORBIDDEN_403, message);
             }
 
-        }
-        catch (IOException e) {
-            //todo remove any created directories
-            return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, e.getMessage());
-        }
+            try {
 
-        if (!file.canWrite()) {
-            return HttpServer.getErrorResponse(HttpResponse.FORBIDDEN_403, "\nCan't write to file: " + file.getPath() + "\n");
-        }
+                if (!file.exists()) {
+                    boolean success = file.createNewFile();
+                    if (!success) throw new IOException("Cannot create new file: " + path + "\n");
+                }
 
-        //write content to file, or overwrite with new or no content
-        try (PrintWriter pw = new PrintWriter(file)) {
-            String content = httpRequest.getEntityBody();
-            pw.print(content!= null ? content : "");
-        }
-        catch (FileNotFoundException fnf) {
-            //todo clean up directories
-            String message = "Problem writing to file: " + file.getPath();
-            return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
-        }
+            }
+            catch (IOException e) {
+                //todo remove any created directories
+                return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, e.getMessage());
+            }
 
-        String message = "File '" + file.getPath() + "' created successfully. Size: " + httpRequest.getContentLength() + "\n";
-        return getResponse(HttpResponse.CREATED_201, message);
+            if (!file.canWrite()) {
+                return HttpServer.getErrorResponse(HttpResponse.FORBIDDEN_403, "\nCan't write to file: " + file.getPath() + "\n");
+            }
 
+            //write content to file, or overwrite with new or no content
+            try (PrintWriter pw = new PrintWriter(file)) {
+                String content = httpRequest.getEntityBody();
+                pw.print(content!= null ? content : "");
+            }
+            catch (FileNotFoundException fnf) {
+                //todo clean up directories
+                String message = "Problem writing to file: " + file.getPath();
+                return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
+            }
+
+            String message = "File '" + file.getPath() + "' created successfully. Size: " + httpRequest.getContentLength() + "\n";
+            return getResponse(HttpResponse.CREATED_201, message);
+
+        }
+        finally {
+            w.unlock();
+        }
     }
 
     private HttpResponse getResponse(String statusAndReason, String message) {

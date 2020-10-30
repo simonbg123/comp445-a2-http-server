@@ -23,7 +23,7 @@ public class HttpServer {
     private boolean verbose; // to comply with the assignment command line option
     private int portNumber;
     private HttpRequestHandler requestHandler;
-    private Object verboseOutputLock;
+    private final Object verboseOutputLock  = new Object();;
 
     public HttpServer(int portNumber, HttpRequestHandler requestHandler) {
         this.portNumber = portNumber;
@@ -35,7 +35,6 @@ public class HttpServer {
         this.portNumber = portNumber;
         this.requestHandler = requestHandler;
         this.verbose = verbose;
-        verboseOutputLock = new Object();
     }
 
     public void run() throws IOException {
