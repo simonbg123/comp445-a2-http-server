@@ -10,10 +10,10 @@ import java.util.Scanner;
  * Driver class. Parses command-line arguments and creates and runs the File Server.
  */
 public class Main {
-    //todo enforce non-well-known ports only?
     private static final int DEFAULT_PORT = 8080;
     private static final int MAX_PORT = 65535;
-    private static final String PORT_ERROR = "Port out of range. Please select a port in range [0, 65535]";
+    private static final String PORT_ERROR = "Port out of range. Please select a port in range [1024, 65535]";
+    private static final String RESERVED_PORT_ERROR = "Chosen port is a well-known port. Please select a port in range [1024, 65535]";
     private static final String DIR_ERROR = "The path does not correspond to a directory.";
 
     public static void main(String[] args) {
@@ -60,26 +60,13 @@ public class Main {
         }
 
         if (port < 0 || port > MAX_PORT) {
-            System.out.println(PORT_ERROR + "\n");
+            System.out.println("\n" + PORT_ERROR + "\nExiting...\n");
             return;
         }
-        else if (port < 1024 && port != 80) {
+        else if (port < 1024) {
 
-            System.out.println("\nWarning: the selected port is a well-known port.\n");
-            /*Scanner scan = new Scanner(System.in);
-            String answer = "";
-            do {
-                System.out.println("Well-known port number specified.\nDo you wish to proceed? (y | n)");
-                answer = scan.next();
-            }
-            while (! answer.matches("^\\s*[ynYN]\\s*$"));
-            scan.close();
-            scan = null;
-            if (answer.trim().toLowerCase().equals("n")) {
-                System.out.println("Exiting...");
-                return;
-            }*/
-
+            System.out.println("\n" + RESERVED_PORT_ERROR + "\nExiting...\n");
+            return;
         }
 
 
