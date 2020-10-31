@@ -2,10 +2,8 @@ package http;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -45,9 +43,9 @@ public class HttpServer {
 
         while(true) {
 
-            try (Socket clientSocket = serverSocket.accept()) {
+            try {
 
-                new HttpServerThread(clientSocket, requestHandler, verbose, verboseOutputLock).start();
+                new HttpServerThread(serverSocket.accept(), requestHandler, verbose, verboseOutputLock).start();
 
             }
             catch (IOException ioe) {

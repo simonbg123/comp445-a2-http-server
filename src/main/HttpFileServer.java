@@ -59,6 +59,8 @@ public class HttpFileServer implements HttpRequestHandler {
             File file = new File(path);
 
             if (file.isDirectory()) {
+
+                String[] fileList = file.list();
                 return HttpServer.getErrorResponse(HttpResponse.NOT_FOUND_404, "Resource is a not a file.\n");
             }
             else if (!file.isFile()){
@@ -172,6 +174,7 @@ public class HttpFileServer implements HttpRequestHandler {
         return new HttpResponse.Builder(VERSION_1_0)
                 .statusCodeAndReasonPhrase(statusAndReason)
                 .date(formatter.format(ZonedDateTime.now()))
+                .contentType(HttpResponse.contentTypePlainText)
                 .contentLength(contentLength)
                 .entityBody(message)
                 .build();

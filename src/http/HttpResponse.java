@@ -11,7 +11,11 @@ public class HttpResponse {
     public static final String INTERNAL_SERVER_ERROR_500 = "500 Internal Server Error";
     public static final String UNSPPORTED_VERSION_505 = "505 Version Not Supported";
 
-    public static final String contentTypePlainText = "Content-Type: text/plain";
+    public static final String contentTypePlainText = "text/plain";
+    public static final String contentTypeJson = "application/json";
+    public static final String contentTypeHtml = "text/html";
+    public static final String contentTypeXml = "text/xml";
+    public static final String contentTypeJpeg = "image/jpeg";
 
     /**
      *  Status line

@@ -47,6 +47,14 @@ public class HttpServerThread extends Thread {
             catch (HttpRequestUnsupportedVersionException e) {
                 httpResponse = HttpServer.getErrorResponse(HttpResponse.UNSPPORTED_VERSION_505, e.getMessage());
             }
+            catch (SecurityException e) {
+                String message = "Access to directory was denied.";
+                httpResponse = HttpServer.getErrorResponse(message, e.getMessage());
+            }
+            catch (Exception e) {
+                String message = "Problem handling the request.";
+                httpResponse = HttpServer.getErrorResponse(message, e.getMessage());
+            }
 
             out.print(httpResponse.toString());
             out.flush();
