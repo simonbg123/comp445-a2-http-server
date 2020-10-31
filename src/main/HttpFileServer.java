@@ -8,6 +8,7 @@ import http.HttpServer;
 import java.io.*;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -82,6 +83,7 @@ public class HttpFileServer implements HttpRequestHandler {
                 return HttpServer.getErrorResponse(HttpResponse.FORBIDDEN_403, message);
             }
 
+
             //if ok, get the string and make a 200ok response with body
             try (BufferedReader br = new BufferedReader(new FileReader(path))) {
 
@@ -92,6 +94,16 @@ public class HttpFileServer implements HttpRequestHandler {
                 }
 
                 httpResponse = getResponse(HttpResponse.OK_200, sb.toString());
+
+                // get file extension
+                Optional<String> extension = getExtensionByStringHandling(path);
+                if(extension.isPresent()) {
+                    String ext = HttpResponse.getExtensionString(extension.get());
+                    if (ext != null) {
+                        httpResponse.setContentType(ext);
+                    }
+                }
+
 
             }
             catch (FileNotFoundException fnf) {
@@ -194,5 +206,11 @@ public class HttpFileServer implements HttpRequestHandler {
     private HttpResponse getResponse(String statusAndReason) {
 
         return getResponse(statusAndReason, "");
+    }
+
+    private Optional<String> getExtensionByStringHandling(String filename) {
+        return Optional.ofNullable(filename)
+                .filter(f -> f.contains("."))
+                .map(f -> f.substring(filename.lastIndexOf(".") + 1));
     }
 }

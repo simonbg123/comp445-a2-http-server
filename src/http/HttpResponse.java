@@ -15,7 +15,7 @@ public class HttpResponse {
     public static final String contentTypeJson = "application/json";
     public static final String contentTypeHtml = "text/html";
     public static final String contentTypeXml = "text/xml";
-    public static final String contentTypeJpeg = "image/jpeg";
+    public static final String contentTypePng = "image/png";
 
     /**
      *  Status line
@@ -63,6 +63,20 @@ public class HttpResponse {
 
     public String getEntityBody() {
         return entityBody;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public static String getExtensionString(String ext) {
+
+        if (ext.equalsIgnoreCase("json")) return contentTypeJson;
+        else if (ext.equalsIgnoreCase("html")) return contentTypeHtml;
+        else if (ext.equalsIgnoreCase("xml")) return contentTypeXml;
+        else if (ext.equalsIgnoreCase("png")) return contentTypePng;
+
+        return null;
     }
 
     @Override
