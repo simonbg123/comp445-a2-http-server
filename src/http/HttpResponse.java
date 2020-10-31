@@ -25,6 +25,7 @@ public class HttpResponse {
     private String date; // optional
     private int contentLength; // If no body, then must be defined as 0.
     private String contentType; // optional, text/plain
+    private String contentDisposition;
 
     /**
      * Entity Body
@@ -38,6 +39,7 @@ public class HttpResponse {
         this.date = builder.date;
         this.contentLength = builder.contentLength;
         this.contentType = builder.contentType;
+        this.contentDisposition = builder.contentDisposition;
         this.entityBody = builder.entityBody;
     }
 
@@ -86,6 +88,7 @@ public class HttpResponse {
                 ((date != null) ? "Date: " + date + "\r\n" : "") +
                 "Content-Length: " + contentLength + "\r\n" +
                 ((contentType != null)? "Content-Type: " + contentType + "\r\n" : "") +
+                ((contentDisposition != null) ? "Content-Disposition: " + contentDisposition + "\r\n" : "") +
                 "\r\n" + // end of header
                 ((contentLength > 0 && entityBody != null)? entityBody : "" );
     }
@@ -96,6 +99,7 @@ public class HttpResponse {
         private String date;
         private int contentLength;
         private String contentType;
+        private String contentDisposition;
         private String entityBody;
 
         public Builder(String version) {
@@ -119,6 +123,11 @@ public class HttpResponse {
 
         public Builder contentType(String contentType) {
             this.contentType = contentType;
+            return this;
+        }
+
+        public Builder contentDisposition(String contentDisposition) {
+            this.contentDisposition = contentDisposition;
             return this;
         }
 

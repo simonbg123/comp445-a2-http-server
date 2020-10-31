@@ -17,6 +17,7 @@ import static http.HttpServer.VERSION_1_0;
 public class HttpFileServer implements HttpRequestHandler {
 
     private DateTimeFormatter formatter = DateTimeFormatter.ofPattern("EEE, dd MMM yyyy HH:mm:ss O");
+    private final static String DEFAULT_CONTENT_DISPOSITION = "inline";
 
     private final ReentrantReadWriteLock rwl = new ReentrantReadWriteLock();
     private final Lock r = rwl.readLock();
@@ -96,7 +97,7 @@ public class HttpFileServer implements HttpRequestHandler {
                 httpResponse = getResponse(HttpResponse.OK_200, sb.toString());
 
                 // get file extension
-                Optional<String> extension = getExtensionByStringHandling(path);
+                Optional<String> extension = getExtension(path);
                 if(extension.isPresent()) {
                     String ext = HttpResponse.getExtensionString(extension.get());
                     if (ext != null) {
@@ -162,7 +163,6 @@ public class HttpFileServer implements HttpRequestHandler {
 
             }
             catch (IOException e) {
-                //todo remove any created directories
                 return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, e.getMessage());
             }
 
@@ -176,7 +176,6 @@ public class HttpFileServer implements HttpRequestHandler {
                 pw.print(content!= null ? content : "");
             }
             catch (FileNotFoundException fnf) {
-                //todo clean up directories
                 String message = "Problem writing to file: " + file.getPath();
                 return HttpServer.getErrorResponse(HttpResponse.INTERNAL_SERVER_ERROR_500, message);
             }
@@ -199,6 +198,7 @@ public class HttpFileServer implements HttpRequestHandler {
                 .date(formatter.format(ZonedDateTime.now()))
                 .contentType(HttpResponse.contentTypePlainText)
                 .contentLength(contentLength)
+                .contentDisposition(DEFAULT_CONTENT_DISPOSITION)
                 .entityBody(message)
                 .build();
     }
@@ -208,7 +208,7 @@ public class HttpFileServer implements HttpRequestHandler {
         return getResponse(statusAndReason, "");
     }
 
-    private Optional<String> getExtensionByStringHandling(String filename) {
+    private Optional<String> getExtension(String filename) {
         return Optional.ofNullable(filename)
                 .filter(f -> f.contains("."))
                 .map(f -> f.substring(filename.lastIndexOf(".") + 1));
