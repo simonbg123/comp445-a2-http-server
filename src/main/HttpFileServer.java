@@ -60,8 +60,19 @@ public class HttpFileServer implements HttpRequestHandler {
 
             if (file.isDirectory()) {
 
-                String[] fileList = file.list();
-                return HttpServer.getErrorResponse(HttpResponse.NOT_FOUND_404, "Resource is a not a file.\n");
+                File[] fileList = file.listFiles();
+                StringBuilder sb = new StringBuilder();
+                if (fileList != null && fileList.length > 0){
+                    for (File dirEntity : fileList) {
+                        sb.append(dirEntity.getName());
+                        sb.append(dirEntity.isDirectory() ? File.separator + "\n" : "\n");
+                    }
+                }
+                else {
+                    sb.append("Empty directory\n");
+                }
+
+                return getResponse(HttpResponse.OK_200, sb.toString());
             }
             else if (!file.isFile()){
                 return HttpServer.getErrorResponse(HttpResponse.NOT_FOUND_404, "Resource does not exist.\n");
