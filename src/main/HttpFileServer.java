@@ -13,6 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.regex.Pattern;
 
 import static http.HttpServer.VERSION_1_0;
 
@@ -230,7 +231,7 @@ public class HttpFileServer implements HttpRequestHandler {
 
     private boolean pathIsWithinRootDir(String path) {
         Path normalizedPath = Paths.get(path).normalize();
-        String regex = "^" + rootDir + "(" + File.separator + ".*)?$";
+        String regex = "^" + Pattern.quote(rootDir) + "(" + File.separator + ".*)?$";
         return normalizedPath.toString().matches(regex);
 
     }
