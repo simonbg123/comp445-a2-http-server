@@ -231,7 +231,7 @@ public class HttpFileServer implements HttpRequestHandler {
 
     private boolean pathIsWithinRootDir(String path) {
         Path normalizedPath = Paths.get(path).normalize();
-        String regex = "^" + Pattern.quote(rootDir) + "(" + File.separator + ".*)?$";
+        String regex = "^" + Pattern.quote(rootDir) + "(" + Pattern.quote(File.separator) + ".*)?$";
         return normalizedPath.toString().matches(regex);
 
     }
