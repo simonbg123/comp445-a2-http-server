@@ -6,6 +6,8 @@ import http.HttpResponse;
 import http.HttpServer;
 
 import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -58,7 +60,14 @@ public class HttpFileServer implements HttpRequestHandler {
         try {
             HttpResponse httpResponse = null;
             String path = rootDir + httpRequest.getRequestURI();
+
+            if (! pathIsWithinRootDir(path)) {
+                String message = "Access forbidden for path: " + path + "\n";
+                return HttpServer.getErrorResponse(HttpResponse.FORBIDDEN_403, message);
+            }
+
             File file = new File(path);
+
 
             if (file.isDirectory()) {
 
@@ -138,6 +147,11 @@ public class HttpFileServer implements HttpRequestHandler {
 
             File file = new File(fullPath);
 
+            if (! pathIsWithinRootDir(fullPath)) {
+                String message = "Access forbidden for path: " + fullPath + "\n";
+                return HttpServer.getErrorResponse(HttpResponse.FORBIDDEN_403, message);
+            }
+
             String path = file.getParent();
 
             File folder = new File(path);
@@ -212,5 +226,12 @@ public class HttpFileServer implements HttpRequestHandler {
         return Optional.ofNullable(filename)
                 .filter(f -> f.contains("."))
                 .map(f -> f.substring(filename.lastIndexOf(".") + 1));
+    }
+
+    private boolean pathIsWithinRootDir(String path) {
+        Path normalizedPath = Paths.get(path).normalize();
+        String regex = "^" + rootDir + "(" + File.separator + ".*)?$";
+        return normalizedPath.toString().matches(regex);
+
     }
 }
